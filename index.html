@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Revision">
+<meta name="theme-color" content="#eceff6">
+<title>Revision Tracker</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one subject at a time. Coloured subject chips on top, papers as sections, each topic a tap-to-cycle row. */
+:root{
+ --bg:#eceff6;--surface:#ffffff;--raised:#f4f6fb;--ink:#141a2e;--mute:#566077;--line:#dce1ec;
+ --on:#ffffff;--none:#bcc4d4;
+ --rev:#d97706;--rev-t:#a85a05;--on-rev:#2b1600;
+ --ok:#15803d;--ok-t:#15803d;--on-ok:#ffffff;
+ --c0:#c2410c;--c1:#a21caf;--c2:#1d4ed8;--c3:#15803d;--c4:#0f766e;--c5:#5b3fd6;--c6:#be123c;--c7:#a16207;--c8:#92400e;
+ --f-head:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+ --f-body:"DM Sans","Avenir Next","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#0e1322;--surface:#161d33;--raised:#1c2440;--ink:#e9edf8;--mute:#98a3bb;--line:#2a3452;
+ --on:#0b1020;--none:#4a5674;
+ --rev:#fbbf24;--rev-t:#fbbf24;--on-rev:#2b1600;
+ --ok:#4ade80;--ok-t:#4ade80;--on-ok:#052e16;
+ --c0:#fb923c;--c1:#e879f9;--c2:#7aa7ff;--c3:#4ade80;--c4:#2dd4bf;--c5:#a78bfa;--c6:#fb7185;--c7:#facc15;--c8:#d6a272;
+ color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#0e1322;--surface:#161d33;--raised:#1c2440;--ink:#e9edf8;--mute:#98a3bb;--line:#2a3452;
+ --on:#0b1020;--none:#4a5674;
+ --rev:#fbbf24;--rev-t:#fbbf24;--on-rev:#2b1600;
+ --ok:#4ade80;--ok-t:#4ade80;--on-ok:#052e16;
+ --c0:#fb923c;--c1:#e879f9;--c2:#7aa7ff;--c3:#4ade80;--c4:#2dd4bf;--c5:#a78bfa;--c6:#fb7185;--c7:#facc15;--c8:#d6a272;
+ color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);padding-block:22px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:680px;margin:0 auto}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}
+h1{font:700 1.7rem/1.05 var(--f-head);margin:0;letter-spacing:-.015em}
+.tot{font-size:.85rem;color:var(--mute);text-align:right;white-space:nowrap}
+.tot b{color:var(--ink);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.tbar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:18px}
+.tbar i{display:block;height:100%;background:var(--ink);border-radius:3px}
+.chips{position:relative;display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 13px;font:600 .9rem var(--f-body)}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--sc)}
+.chip small{font-weight:500;color:var(--mute);font-size:.78rem;font-variant-numeric:tabular-nums}
+.chip.on{background:var(--sc);border-color:var(--sc);color:var(--on)}
+.chip.on .dot{background:var(--on)}
+.chip.on small{color:var(--on);opacity:.85}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 6px}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;border-radius:7px;padding:6px 12px;font-size:.86rem;font-weight:500;color:var(--mute)}
+.seg button.on{background:var(--sc);color:var(--on)}
+.tog{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:.86rem;font-weight:500}
+.tog.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.srcd{font-size:.84rem;color:var(--mute)}
+.srcd summary{padding:6px 0;cursor:pointer}
+.srcd p{margin:2px 0 8px;max-width:62ch}
+.ph{font:700 .98rem var(--f-head);color:var(--sc);margin:22px 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 14px 10px;margin-bottom:12px}
+.card h3{font:700 1.05rem/1.25 var(--f-head);margin:0}
+.meta{font-size:.82rem;color:var(--mute);margin-top:2px}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--sc);border-radius:3px}
+.empty{padding:10px 0;font-size:.88rem;color:var(--mute)}
+.grp{font-weight:600;font-size:.82rem;margin:12px 0 2px;color:var(--mute)}
+.row{display:flex;align-items:center;gap:2px;border-top:1px solid var(--line)}
+.rm{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:11px 0;text-align:left;border-radius:8px}
+.rm .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.mk{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--none);display:grid;place-items:center;font:700 .8rem/1 var(--f-body)}
+.mk.g1{background:var(--rev);border-color:var(--rev);color:var(--on-rev)}
+.mk.g3{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.n{flex:none;font-size:.78rem;color:var(--mute);font-variant-numeric:tabular-nums}
+.lab{flex:none;font-size:.78rem;font-weight:600}
+.lab.g1{color:var(--rev-t)}.lab.g3{color:var(--ok-t)}
+.ic{flex:none;width:32px;height:36px;border:0;background:none;color:var(--mute);border-radius:8px;font-size:1rem;display:grid;place-items:center}
+.ic:hover{background:var(--raised)}
+.sp .rm{padding:8px 0 8px 34px;font-size:.92rem;color:var(--mute)}
+.sp .mk{width:20px;height:20px;font-size:.7rem}
+textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--raised);margin:0 0 10px;resize:vertical}
+.add{display:flex;gap:8px;padding:10px 0 4px;border-top:1px solid var(--line)}
+.add input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--raised)}
+.add button{border:0;border-radius:10px;background:var(--sc);color:var(--on);font-weight:600;padding:0 18px}
+.small{font-size:.8rem;color:var(--mute);margin-top:14px}
+.rs{border:0;background:none;color:var(--ink);text-decoration:underline;padding:0;font-size:.8rem}
+#bk{max-width:680px;margin:18px auto 0;font-size:.86rem;color:var(--mute)}#bk summary{cursor:pointer;padding:8px 0}.bkb{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.bkb button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;font-weight:500}#bk textarea{margin-top:4px}
+</style>
+
+</head>
+<body>
+<main id="app"></main>
+<script>
+const SUB=[
+{n:'English Language',p:[
+{n:'Paper 1: fiction reading and narrative writing',i:['Reading Q1 (4 marks)','Reading Q2 (8 marks)','Reading Q3 (8 marks)','Reading Q4 (20 marks)','Writing: descriptive or narrative (24 marks content)','Writing: technical accuracy (16 marks)']},
+{n:'Paper 2: non-fiction reading and viewpoint writing',i:['Reading Q1 (4 marks)','Reading Q2 (8 marks)','Reading Q3 (12 marks)','Reading Q4 (16 marks)','Writing: present a viewpoint (24 marks content)','Writing: technical accuracy (16 marks)']}]},
+{n:'English Literature',p:[
+{n:'Paper 1: Shakespeare',i:['Plot and characters','Themes','Context','Key quotes learnt','Extract question technique','Whole-play question technique']},
+{n:'Paper 1: 19th-century novel',i:['Plot and characters','Themes','Context','Key quotes learnt','Extract question technique','Whole-novel question technique']},
+{n:'Paper 2: modern text',i:['Plot and characters','Themes','Context','Key quotes learnt','Essay technique']},
+{n:'Paper 2: poetry',i:['Anthology poems (add each poem below)','Unseen poetry: single poem','Unseen poetry: comparison']}]},
+{n:'Maths',p:[{n:'OCR content (higher)',i:[
+'Number operations and integers › Calculations with integers','Number operations and integers › Whole number theory','Number operations and integers › Combining arithmetic operations','Number operations and integers › Inverse operations',
+'Fractions, decimals and percentages › Fractions','Fractions, decimals and percentages › Decimal fractions','Fractions, decimals and percentages › Percentages','Fractions, decimals and percentages › Ordering fractions, decimals and percentages',
+'Indices and surds › Powers and roots','Indices and surds › Standard form','Indices and surds › Exact calculations',
+'Approximation and estimation › Approximation and estimation',
+'Ratio, proportion and rates of change › Calculations with ratio','Ratio, proportion and rates of change › Direct and inverse proportion','Ratio, proportion and rates of change › Discrete growth and decay',
+'Algebra › Algebraic expressions','Algebra › Algebraic formulae','Algebra › Algebraic equations','Algebra › Algebraic inequalities','Algebra › Language of functions','Algebra › Sequences',
+'Graphs of equations and functions › Graphs of equations and functions','Graphs of equations and functions › Straight line graphs','Graphs of equations and functions › Transformations of curves and their equations','Graphs of equations and functions › Interpreting graphs',
+'Basic geometry › Conventions, notation and terms','Basic geometry › Ruler and compass constructions','Basic geometry › Angles','Basic geometry › Properties of polygons','Basic geometry › Circles','Basic geometry › Three-dimensional shapes',
+'Congruence and similarity › Plane isometric transformations','Congruence and similarity › Congruence','Congruence and similarity › Plane vector geometry','Congruence and similarity › Similarity',
+'Mensuration › Units and measurement','Mensuration › Perimeter calculations','Mensuration › Area calculations','Mensuration › Volume and surface area calculations','Mensuration › Triangle mensuration',
+'Probability › Basic probability and experiments','Probability › Combined events and probability diagrams',
+'Statistics › Sampling','Statistics › Interpreting and representing data','Statistics › Analysing data']}]},
+{n:'Biology',p:[
+{n:'Paper 1',i:['Cell biology','Organisation','Infection and response','Bioenergetics']},
+{n:'Paper 2',i:['Homeostasis and response','Inheritance, variation and evolution','Ecology']}]},
+{n:'Chemistry',p:[
+{n:'Paper 1',i:['Atomic structure and the periodic table','Bonding, structure and the properties of matter','Quantitative chemistry','Chemical changes','Energy changes']},
+{n:'Paper 2',i:['The rate and extent of chemical change','Organic chemistry','Chemical analysis','Chemistry of the atmosphere','Using resources']}]},
+{n:'Physics',p:[
+{n:'Paper 1',i:['Energy','Electricity','Particle model of matter','Atomic structure']},
+{n:'Paper 2',i:['Forces','Waves','Magnetism and electromagnetism','Space physics']}]},
+{n:'Spanish',p:[
+{n:'Content: themes and vocabulary',i:['Theme 1: People and lifestyle','Theme 2: Popular culture','Theme 3: Communication and the world around us','Grammar and verb tenses']},
+{n:'Paper 1: Listening',i:['Listening comprehension','Dictation']},
+{n:'Paper 2: Speaking',i:['Role-play','Reading aloud and short conversation','Photo card and unprepared conversation']},
+{n:'Paper 3: Reading',i:['Reading comprehension','Translation into English']},
+{n:'Paper 4: Writing',i:['Translation into Spanish','90-word task','150-word task']}]},
+{n:'Geography',p:[
+{n:'Paper 1: Living with the physical environment',i:['Natural hazards › Definition, types, factors affecting risk','Tectonic hazards › Plate tectonics and margins (constructive, destructive, conservative)','Tectonic hazards › Distribution of earthquakes and volcanoes','Tectonic hazards › Primary and secondary effects, immediate and long-term responses','Tectonic hazards › Named examples: two areas of contrasting wealth','Tectonic hazards › Why people stay; monitoring, prediction, protection, planning','Weather hazards › Atmospheric circulation, pressure belts, surface winds','Weather hazards › Tropical storms: distribution, causes, formation, structure','Weather hazards › Tropical storms: climate change effects','Weather hazards › Tropical storm named example: effects, responses, reducing effects','Weather hazards › UK weather hazards overview','Weather hazards › UK extreme weather example, evidence it is getting more extreme','Climate change › Evidence since the Quaternary','Climate change › Natural and human causes','Climate change › Effects on people and environment','Climate change › Mitigation and adaptation','Ecosystems › UK small-scale ecosystem: food chain, web, nutrient cycling','Ecosystems › Balance, change, global ecosystem distribution','Tropical rainforests › Characteristics, interdependence, adaptations, biodiversity','Tropical rainforests › Deforestation: rates, causes, impacts (case study)','Tropical rainforests › Sustainable management and value','Hot deserts (if studied) › Characteristics, adaptations, biodiversity','Hot deserts (if studied) › Opportunities and challenges (case study)','Hot deserts (if studied) › Desertification: causes and strategies','Cold environments (if studied) › Characteristics, adaptations, biodiversity','Cold environments (if studied) › Opportunities and challenges (case study)','Cold environments (if studied) › Protection, balancing development and conservation','UK landscapes › Upland, lowland and river overview','Coasts (if studied) › Wave types, weathering, mass movement, erosion, transport, deposition','Coasts (if studied) › Erosion landforms: headlands, bays, cliffs, wave-cut platforms, caves, arches, stacks','Coasts (if studied) › Deposition landforms: beaches, dunes, spits, bars; UK coast example','Coasts (if studied) › Hard, soft engineering, managed retreat; UK scheme example','Rivers (if studied) › Long and cross profile; erosion, transport, deposition','Rivers (if studied) › Landforms: interlocking spurs, waterfalls, gorges, meanders, ox-bow lakes, levées, flood plains, estuaries; UK valley example','Rivers (if studied) › Flood risk factors, hydrographs','Rivers (if studied) › Flood management strategies; UK scheme example','Glaciation (if studied) › Ice cover, freeze-thaw, erosion, transport, deposition','Glaciation (if studied) › Erosion landforms: corries, arêtes, pyramidal peaks, troughs, ribbon lakes, hanging valleys','Glaciation (if studied) › Deposition landforms: erratics, drumlins, moraines; UK upland example','Glaciation (if studied) › Economic activities, land use conflicts, tourism example']},
+{n:'Paper 2: Challenges in the human environment',i:['Urban › Global urban change, urbanisation factors, megacities','Urban › LIC or NEE city case study: location, growth, opportunities, challenges','Urban › Urban planning example improving life for the urban poor','Urban › UK city case study: migration, opportunities, challenges, sprawl','Urban › Urban regeneration project example','Urban › Sustainable urban living and transport','Economic world › Classifying development, measures (GNI, HDI and more), limitations','Economic world › Demographic Transition Model and development','Economic world › Causes and consequences of uneven development','Economic world › Strategies to reduce the gap; tourism example in an LIC or NEE','Economic world › LIC or NEE case study: industry, TNCs, aid, environment, quality of life','Economic world › UK economic change: de-industrialisation, post-industrial economy, sustainable industry','Economic world › UK rural change, infrastructure, north–south divide','Economic world › UK in the wider world: trade, EU, Commonwealth','Resources › Significance of food, water, energy; global inequality','Resources › UK food, water and energy demand and supply','Food (if studied) › Supply, demand, insecurity and impacts','Food (if studied) › Strategies; large-scale example; sustainable scheme in an LIC or NEE','Water (if studied) › Supply, demand, insecurity and impacts','Water (if studied) › Strategies; water transfer example; sustainable local scheme','Energy (if studied) › Supply, demand, insecurity and impacts','Energy (if studied) › Strategies; fossil fuel example; local renewable scheme']},
+{n:'Paper 3: Geographical applications',i:['Issue evaluation › Pre-release resources: reading and annotating','Issue evaluation › Weighing evidence and justifying a decision','Fieldwork › Human enquiry: question, methods, data collection','Fieldwork › Human enquiry: presentation, analysis, conclusion, evaluation','Fieldwork › Physical enquiry: question, methods, data collection','Fieldwork › Physical enquiry: presentation, analysis, conclusion, evaluation','Skills › Map skills: OS maps, grid references, contours, scale','Skills › Graphs, charts and data presentation','Skills › Numerical and statistical skills']}]},
+{n:'DT',p:[{n:'Timbers',i:['Types and properties','Uses and finishes','Joints, tools and processes']}]}];
+
+const SRC={'English Language':'From the AQA 8700 outline you pasted.','English Literature':'Paper structure from AQA 8702. Text content (characters, themes, context, quotes) is general knowledge: check it against your class notes. A Christmas Carol is assumed as your 19th-century novel: change it if wrong.','Maths':'From the OCR content overview you pasted.','Biology':'AQA 8461 topic list you pasted. Paper 1/2 split is the standard AQA split.','Chemistry':'AQA 8462 topic list you pasted. Paper 1/2 split is the standard AQA split.','Physics':'AQA topic list you pasted. Paper 1/2 split is the standard AQA split.','Spanish':'AQA spec outline you pasted. Topic-level detail not added yet.','Geography':'AQA 8035 spec, sections 3.1 to 3.3. Cold environments and glaciation removed. Geographical skills are general knowledge: check them. Add your case studies under each topic with the note button.','DT':'Eduqas Component 1: 2 hours, 100 marks (Section A core 75, Section B in-depth 25). Core topic names and the making principles come from Eduqas documents; the fifth core area and the timber points are not confirmed: check them with your teacher.'};
+SUB.forEach(s=>s.src=SRC[s.n]||'');
+const G=SUB.find(s=>s.n==='Geography');
+G.p.forEach(p=>p.i=p.i.filter(x=>!/^(Cold|Glaciation)/.test(x)));
+G.p[2].i=['Issue evaluation \u203a Pre-release resource booklet (out 12 weeks before)','Issue evaluation \u203a Issue at a range of scales, using units 3.1 and 3.2 together','Issue evaluation \u203a Stakeholder views, advantages and disadvantages','Issue evaluation \u203a Evaluating options and justifying a decision','Fieldwork \u203a Two enquiries in contrasting environments (one physical, one human)','Fieldwork \u203a 1: Suitable question, theory, risks','Fieldwork \u203a 2: Selecting, measuring and recording data; sampling','Fieldwork \u203a 3: Processing and presenting data','Fieldwork \u203a 4: Describing, analysing and explaining data','Fieldwork \u203a 5: Reaching conclusions','Fieldwork \u203a 6: Evaluating the enquiry','Fieldwork \u203a Unfamiliar fieldwork context questions','Skills \u203a Map skills: OS maps, grid references, contours, scale','Skills \u203a Graphs, charts and data presentation','Skills \u203a Numerical and statistical skills'];
+const X=o=>Object.entries(o).flatMap(([t,a])=>a.length?a.map(x=>t+' › '+x):[t]);
+const setP=(n,p)=>{SUB.find(s=>s.n===n).p=p};
+const setS=(n,t)=>{SUB.find(s=>s.n===n).src=t};
+
+const LH1='Paper 1: Shakespeare and the 19th-century novel',LH2='Paper 2: Modern texts and poetry';
+setP('English Literature',[
+{n:'Romeo and Juliet',h:LH1,i:[],tg:'12 quotes',u:'quotes learnt',ph:'Quote, or Theme > quote'},
+{n:'A Christmas Carol',h:LH1,i:[],tg:'12 quotes',u:'quotes learnt',ph:'Quote, or Theme > quote'},
+{n:'An Inspector Calls',h:LH2,i:[],tg:'12 quotes',u:'quotes learnt',ph:'Quote, or Theme > quote'},
+{n:'Power and Conflict poems',h:LH2,i:['Ozymandias','London','The Prelude (extract)','My Last Duchess','The Charge of the Light Brigade','Exposure','Storm on the Island','Bayonet Charge','Remains','Poppies','War Photographer','Tissue','The Emigrée','Checking Out Me History','Kamikaze'],tg:'3 quotes per poem',u:'poems learnt',ph:'Poem > quote'},
+{n:'Unseen poetry',h:LH2,i:['Single poem question','Comparison question']}]);
+setS('English Literature','Quote bank only. Add each quote you choose. To file it under a theme or a poem, type Theme > quote or Poem > quote. The pencil is for where it is, the key word, the theme and the context. A Christmas Carol is assumed as your 19th-century novel. Use the cross to hide poems you are not studying.');
+
+const MH='OCR Higher content';
+setP('Maths',[
+{n:'Number operations and integers',h:MH,i:X({
+'Calculations with integers':['Four operations with negative numbers','Long multiplication and division','Place value and ordering numbers'],
+'Whole number theory':['Factors, multiples and primes','Prime factorisation','HCF and LCM'],
+'Combining arithmetic operations':['Order of operations (BIDMAS)','Using brackets and a calculator correctly'],
+'Inverse operations':['Using inverses to check and solve','Inverses of powers and roots']})},
+{n:'Fractions, decimals and percentages',h:MH,i:X({
+'Fractions':['Equivalent fractions and simplifying','Adding and subtracting fractions','Multiplying and dividing fractions','Mixed numbers and improper fractions','Fraction of an amount'],
+'Decimal fractions':['Four operations with decimals','Converting between fractions, decimals and percentages','Recurring decimals to fractions'],
+'Percentages':['Percentage of an amount','Percentage increase and decrease','Reverse percentages','Repeated percentage change and compound interest','One quantity as a percentage of another'],
+'Ordering fractions, decimals and percentages':[]})},
+{n:'Indices and surds',h:MH,i:X({
+'Powers and roots':['Index laws','Negative and fractional indices','Squares, cubes and roots'],
+'Standard form':['Converting to and from standard form','Calculating with standard form'],
+'Exact calculations':['Simplifying surds','Expanding brackets with surds','Rationalising the denominator','Answers in terms of pi']})},
+{n:'Approximation and estimation',h:MH,i:X({
+'Approximation and estimation':['Rounding to decimal places and significant figures','Estimating calculations','Error intervals and bounds']})},
+{n:'Ratio, proportion and rates of change',h:MH,i:X({
+'Calculations with ratio':['Simplifying ratios','Sharing in a ratio','Ratio and fractions','Best buys and unit prices'],
+'Direct and inverse proportion':['Direct proportion','Inverse proportion','Algebraic proportion (y = kx and y = k/x)','Graphs of proportion'],
+'Discrete growth and decay':['Compound interest and depreciation','Growth and decay with a multiplier']})},
+{n:'Algebra',h:MH,i:X({
+'Algebraic expressions':['Simplifying and collecting like terms','Expanding single and double brackets','Factorising: common factors and quadratics','Algebraic fractions'],
+'Algebraic formulae':['Substitution','Rearranging formulae','Changing the subject when it appears twice'],
+'Algebraic equations':['Linear equations','Simultaneous equations (linear)','Simultaneous equations (linear and quadratic)','Quadratic equations by factorising','Quadratic formula and completing the square','Forming equations from words','Iteration'],
+'Algebraic inequalities':['Solving linear inequalities','Inequalities on number lines','Quadratic inequalities','Regions on graphs'],
+'Language of functions':['Function notation','Composite functions','Inverse functions'],
+'Sequences':['Term-to-term and position-to-term rules','nth term of linear sequences','Quadratic sequences','Geometric and Fibonacci-type sequences']})},
+{n:'Graphs of equations and functions',h:MH,i:X({
+'Graphs of equations and functions':['Plotting and recognising quadratic, cubic and reciprocal graphs','Exponential graphs','Equation of a circle','Roots and turning points','Trigonometric graphs'],
+'Straight line graphs':['Gradient and y-intercept','Equation of a line from two points','Parallel and perpendicular lines','Midpoint and length of a line segment'],
+'Transformations of curves and their equations':['Translations of graphs','Reflections and stretches of graphs'],
+'Interpreting graphs':['Distance-time graphs','Velocity-time graphs and area under a graph','Gradient as rate of change','Tangents to curves']})},
+{n:'Basic geometry',h:MH,i:X({
+'Conventions, notation and terms':['Geometry vocabulary and notation'],
+'Ruler and compass constructions':['Constructing triangles','Perpendicular and angle bisectors','Loci'],
+'Angles':['Angles on lines, around points and in triangles','Parallel line angle rules','Bearings'],
+'Properties of polygons':['Triangles and quadrilaterals','Interior and exterior angles of polygons','Symmetry'],
+'Circles':['Parts of a circle','Circle theorems','Tangents and chords'],
+'Three-dimensional shapes':['Names and properties of solids','Plans and elevations','Nets']})},
+{n:'Congruence and similarity',h:MH,i:X({
+'Plane isometric transformations':['Reflection','Rotation','Translation','Enlargement including negative and fractional','Describing combined transformations'],
+'Congruence':['Congruence conditions for triangles','Proofs using congruent triangles'],
+'Plane vector geometry':['Column vectors and notation','Adding, subtracting and multiplying vectors','Vector proofs and parallel vectors'],
+'Similarity':['Similar shapes and scale factors','Area and volume scale factors','Similar triangles']})},
+{n:'Mensuration',h:MH,i:X({
+'Units and measurement':['Converting units of length, area and volume','Speed, density and pressure'],
+'Perimeter calculations':['Perimeter of compound shapes','Circumference and arc length'],
+'Area calculations':['Triangles, parallelograms and trapezia','Circles and sectors','Compound shapes'],
+'Volume and surface area calculations':['Prisms and cylinders','Pyramids, cones and spheres','Frustums','Compound solids'],
+'Triangle mensuration':['Pythagoras theorem','Trigonometry: SOH CAH TOA','Exact trigonometric values','Sine rule and cosine rule','Area of a triangle using sine','Pythagoras and trigonometry in 3D']})},
+{n:'Probability',h:MH,i:X({
+'Basic probability and experiments':['Probability scale and calculations','Relative frequency and experiments','Expected outcomes'],
+'Combined events and probability diagrams':['Sample spaces and two-way tables','Tree diagrams','Venn diagrams and set notation','Conditional probability']})},
+{n:'Statistics',h:MH,i:X({
+'Sampling':['Population and sample','Random and stratified sampling','Capture-recapture'],
+'Interpreting and representing data':['Bar charts, pie charts and line graphs','Scatter graphs and correlation','Histograms with unequal class widths','Cumulative frequency graphs','Frequency polygons and stem-and-leaf'],
+'Analysing data':['Mean, median, mode and range','Averages from frequency tables','Quartiles and box plots','Comparing distributions']})}]);
+setS('Maths','Topics are from the OCR J560 content overview you pasted. The finer points are standard higher-tier GCSE content that I wrote, not copied from OCR: check them against the Physics & Maths Tutor topic list.');
+
+setP('Biology',[
+{n:'Cell biology',h:'Paper 1',i:['1.1 Cell structure','1.2 Cell division','1.3 Transport in cells']},
+{n:'Organisation',h:'Paper 1',i:['2.1 Principles of organisation','2.2 Animal tissues, organs and organ systems','2.3 Plant tissues, organs and systems']},
+{n:'Infection and response',h:'Paper 1',i:['3.1 Communicable diseases','3.2 Monoclonal antibodies (higher tier)','3.3 Plant disease']},
+{n:'Bioenergetics',h:'Paper 1',i:['4.1 Photosynthesis','4.2 Respiration']},
+{n:'Homeostasis and response',h:'Paper 2',i:['5.1 Homeostasis','5.2 The human nervous system','5.3 Hormonal coordination in humans','5.4 Plant hormones']},
+{n:'Inheritance, variation and evolution',h:'Paper 2',i:['6.1 Reproduction','6.2 Variation and evolution','6.3 The development of understanding of genetics and evolution','6.4 Classification of living organisms']},
+{n:'Ecology',h:'Paper 2',i:['7.1 Adaptations, interdependence and competition','7.2 Organisation of an ecosystem','7.3 Biodiversity and the effect of human interaction on ecosystems','7.4 Trophic levels in an ecosystem','7.5 Food production']}]);
+setS('Biology','Sub-topic numbers and names follow the AQA spec as listed on Maths Genie, and match how Physics & Maths Tutor groups its questions. The spec also has a short Key ideas section, which I left out.');
+
+setP('Chemistry',[
+{n:'Atomic structure and the periodic table',h:'Paper 1',i:['1.1 A simple model of the atom, relative atomic mass and isotopes','1.2 The periodic table','1.3 Properties of transition metals']},
+{n:'Bonding, structure and the properties of matter',h:'Paper 1',i:['2.1 Chemical bonds: ionic, covalent and metallic','2.2 How bonding and structure are related to properties','2.3 Structure and bonding of carbon','2.4 Bulk and surface properties of matter, including nanoparticles']},
+{n:'Quantitative chemistry',h:'Paper 1',i:['3.1 Chemical measurements, conservation of mass and equations','3.2 Amount of substance and masses of pure substances','3.3 Yield and atom economy','3.4 Concentrations of solutions in mol/dm3','3.5 Amount of substance and volumes of gases']},
+{n:'Chemical changes',h:'Paper 1',i:['4.1 Reactivity of metals','4.2 Reactions of acids','4.3 Electrolysis']},
+{n:'Energy changes',h:'Paper 1',i:['5.1 Exothermic and endothermic reactions','5.2 Chemical cells and fuel cells']},
+{n:'The rate and extent of chemical change',h:'Paper 2',i:['6.1 Rate of reaction','6.2 Reversible reactions and dynamic equilibrium']},
+{n:'Organic chemistry',h:'Paper 2',i:['7.1 Carbon compounds as fuels and feedstock','7.2 Reactions of alkenes and alcohols','7.3 Synthetic and naturally occurring polymers']},
+{n:'Chemical analysis',h:'Paper 2',i:['8.1 Purity, formulations and chromatography','8.2 Identification of common gases','8.3 Identification of ions by chemical and spectroscopic means']},
+{n:'Chemistry of the atmosphere',h:'Paper 2',i:['9.1 The composition and evolution of the Earth’s atmosphere','9.2 Carbon dioxide and methane as greenhouse gases','9.3 Common atmospheric pollutants and their sources']},
+{n:'Using resources',h:'Paper 2',i:['10.1 Using the Earth’s resources and obtaining potable water','10.2 Life cycle assessment and recycling','10.3 Using materials','10.4 The Haber process and the use of NPK fertilisers']}]);
+setS('Chemistry','Sub-topic numbers and names follow the AQA spec as listed on Maths Genie, and match how Physics & Maths Tutor groups its questions. The spec also has a short Key ideas section, which I left out.');
+
+setP('Physics',[
+{n:'Energy',h:'Paper 1',i:['1.1 Energy changes in a system, and the ways energy is stored','1.2 Conservation and dissipation of energy','1.3 National and global energy resources']},
+{n:'Electricity',h:'Paper 1',i:['2.1 Current, potential difference and resistance','2.2 Series and parallel circuits','2.3 Domestic uses and safety','2.4 Energy transfers','2.5 Static electricity']},
+{n:'Particle model of matter',h:'Paper 1',i:['3.1 Changes of state and the particle model','3.2 Internal energy and energy transfers','3.3 Particle model and pressure']},
+{n:'Atomic structure',h:'Paper 1',i:['4.1 Atoms and isotopes','4.2 Atoms and nuclear radiation','4.3 Hazards and uses of radioactive emissions and of background radiation','4.4 Nuclear fission and fusion']},
+{n:'Forces',h:'Paper 2',i:['5.1 Forces and their interactions','5.2 Work done and energy transfer','5.3 Forces and elasticity','5.4 Moments, levers and gears','5.5 Pressure and pressure differences in fluids','5.6 Forces and motion','5.7 Momentum (higher tier)']},
+{n:'Waves',h:'Paper 2',i:['6.1 Waves in air, fluids and solids','6.2 Electromagnetic waves','6.3 Black body radiation']},
+{n:'Magnetism and electromagnetism',h:'Paper 2',i:['7.1 Permanent and induced magnetism, magnetic forces and fields','7.2 The motor effect','7.3 Induced potential, transformers and the National Grid']},
+{n:'Space physics',h:'Paper 2',i:['8.1 Solar system, stability of orbital motions and satellites','8.2 Red-shift']}]);
+setS('Physics','Sub-topic numbers and names follow the AQA spec as listed on Maths Genie, and match how Physics & Maths Tutor groups its questions. That list skipped three sections, which I added from my knowledge of the AQA spec: 2.4 Energy transfers, 5.7 Momentum and 7.3 Induced potential, transformers and the National Grid. Check them against your spec.');
+
+const SPT=['Vocabulary learnt','Listening practice','Sentences I can write and say'];
+setP('Spanish',[
+{n:'Theme 1: People and lifestyle',h:'Themes and topics',i:X({'Identity and relationships with others':SPT,'Healthy living and lifestyle':SPT,'Education and work':SPT})},
+{n:'Theme 2: Popular culture',h:'Themes and topics',i:X({'Free-time activities':SPT,'Customs, festivals and celebrations':SPT,'Celebrity culture':SPT})},
+{n:'Theme 3: Communication and the world around us',h:'Themes and topics',i:X({'Travel and tourism, including places of interest':SPT,'Media and technology':SPT,'The environment and where people live':SPT})},
+{n:'Grammar and verbs',h:'Grammar',i:X({'Present tense':['Regular verbs','Irregular and stem-changing verbs','Reflexive verbs'],'Past tenses':['Preterite','Imperfect','Perfect'],'Future and conditional':['Near future (ir a + infinitive)','Future','Conditional'],'Key verbs':['ser and estar','tener, hacer and ir'],'Agreement':['Adjective agreement and position','Comparatives and superlatives']})},
+{n:'Paper 1: Listening (45 min, 50 marks)',h:'Papers',i:X({'Comprehension, answers in English (40 marks)':['Gist and detail','Numbers, dates and times','Past, present and future time frames'],'Dictation (10 marks)':['Short sentences with some words off the vocabulary list']})},
+{n:'Paper 2: Speaking (10 to 12 min, 50 marks)',h:'Papers',i:X({'Role-play (10 marks)':[],'Reading aloud and short conversation (15 marks)':[],'Photo card (25 marks)':['Response to the photos','Unprepared conversation']})},
+{n:'Paper 3: Reading (1 hour, 50 marks)',h:'Papers',i:X({'Comprehension, answers in English (40 marks)':['Gist and detail','Working out unfamiliar words'],'Translation into English (10 marks)':[]})},
+{n:'Paper 4: Writing (1 hour 15, 50 marks)',h:'Papers',i:X({'Translation into Spanish (10 marks)':[],'90-word task (15 marks)':[],'150-word task (25 marks)':[]})}]);
+setS('Spanish','Papers and marks are from the AQA outline you pasted (higher tier). Theme and topic names are from the AQA spec themes page. The vocabulary points refer to the AQA prescribed vocabulary list. The grammar items are my list of the main tenses: check them against the grammar list in the AQA spec.');
+
+const D=SUB.find(s=>s.n==='DT');
+D.p=[
+{n:'Section A: Core (75 marks)',i:['Design and technology and our world','Smart materials','Electronic systems and programmable components','Mechanical components and devices','Materials and their working properties']},
+{n:'Designing and making principles',i:['Selecting and working with materials and components','Marking out','Using tools and equipment','Using specialist techniques']},
+{n:'Section B: In-depth, timbers (25 marks)',i:['Natural and manufactured timbers \u203a Sources and properties','Natural and manufactured timbers \u203a Stock forms, types and sizes','Natural and manufactured timbers \u203a Working with timber: tools, equipment, processes','Natural and manufactured timbers \u203a Joining and finishing','Natural and manufactured timbers \u203a Sustainability and environmental issues']}];
+
+const $=s=>document.querySelector(s);
+let S={s:{},c:{},n:{},h:{}},store=null,mode='device',tmr,cur=SUB.findIndex(s=>s.n==='Geography'),lvl='topics',hide=false,open=null,fresh=false;
+const LB=['Not marked','Revise','','Solid'];
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const K=(s,p,t)=>s+'|'+p+'|'+t;
+const st=k=>{const v=(S.s[k]||[0])[0];return v===3?3:v?1:0};
+function topics(s,p,all){const m=new Map(),cu=S.c[s.n+'|'+p.n]||[];
+ p.i.concat(cu).forEach(x=>{const z=x.indexOf(' \u203a '),t=(z>0?x.slice(0,z):x).replace(' (if studied)','');if(!m.has(t))m.set(t,[]);if(z>0&&!m.get(t).includes(x.slice(z+3)))m.get(t).push(x.slice(z+3))});
+ const r=[...m].map(([t,d])=>({t,d,c:cu.includes(t),cp:d.filter(x=>cu.includes(t+' \u203a '+x))}));
+ return all?r:r.filter(x=>!S.h[K(s.n,p.n,x.t)])}
+function tst(sn,pn,t){if(!t.d.length)return st(K(sn,pn,t.t));const v=t.d.map(x=>st(K(sn,pn,t.t)+'#'+x));return v.every(x=>x===3)?3:v.some(x=>x)?1:0}
+function save(){clearTimeout(tmr);tmr=setTimeout(async()=>{const j=JSON.stringify(S);try{localStorage.setItem('rt3',j)}catch(e){}},400)}
+function load(o){if(o&&typeof o==='object'){S.s=o.s||{};S.c=o.c||{};S.n=o.n||{};S.h=o.h||{}}}
+function init(){
+ try{const r=localStorage.getItem('rt3');if(r)load(JSON.parse(r))}catch(e){}
+ render()}
+function addTopic(v){const s=SUB[cur],i=$('#at'+v);if(!i)return;const t=(i.value||'').trim().replace(/\s*>\s*/,' › ');if(!t)return;const key=s.n+'|'+s.p[v].n;(S.c[key]=S.c[key]||[]).push(t);i.value='';save();render()}
+function render(){
+ const s=SUB[cur],lit=s.n==='English Literature';
+ const keep={};if(!fresh)document.querySelectorAll('input[id^="at"]').forEach(i=>{if(i.value)keep[i.id]=i.value});fresh=false;
+ let TA=0,TG=0;
+ const chips=SUB.map((x,i)=>{let a=0,g=0;x.p.forEach(p=>topics(x,p).forEach(t=>{a++;if(tst(x.n,p.n,t)===3)g++}));TA+=a;TG+=g;
+  return '<button class="chip'+(i===cur?' on':'')+'" style="--sc:var(--c'+i+')" data-a="sub" data-v="'+i+'"><span class="dot"></span>'+esc(x.n)+'<small>'+g+'/'+a+'</small></button>'}).join('');
+ let o='<div class="wrap" style="--sc:var(--c'+cur+')"><div class="head"><h1>Revision</h1><div class="tot"><b>'+TG+'</b> of '+TA+' solid</div></div><div class="tbar"><i style="width:'+(TA?TG/TA*100:0)+'%"></i></div><div class="chips">'+chips+'</div>';
+ o+='<div class="ctl"><div class="seg"><button class="'+(lvl==='topics'?'on':'')+'" data-a="lvl" data-v="topics">Topics only</button><button class="'+(lvl==='points'?'on':'')+'" data-a="lvl" data-v="points">'+(lit?'With quotes':'With spec points')+'</button></div><button class="tog'+(hide?' on':'')+'" data-a="hide">Hide solid</button></div><details class="srcd"><summary>Where this content comes from</summary><p>'+esc(s.src)+'</p></details>';
+ let lh='',nh=0;
+ s.p.forEach((p,pi)=>{const T=topics(s,p);nh+=topics(s,p,true).length-T.length;let g=0,rows='';
+  if(p.h&&p.h!==lh){lh=p.h;o+='<h2 class="ph">'+esc(p.h)+'</h2>'}
+  T.forEach(t=>{const v=tst(s.n,p.n,t);if(v===3)g++;if(hide&&v===3)return;const k=K(s.n,p.n,t.t);
+   const cnt=t.d.length?t.d.filter(x=>st(k+'#'+x)===3).length+'/'+t.d.length:'';
+   rows+='<div class="row"><button class="rm" data-a="tt" data-p="'+pi+'" data-t="'+esc(t.t)+'" aria-label="'+esc(t.t)+': '+LB[v]+'. Tap to change"><span class="mk g'+v+'">'+(v===3?'✓':v===1?'!':'')+'</span><span class="t">'+esc(t.t)+'</span><span class="n">'+cnt+'</span></button><button class="ic" data-a="nt" data-k="'+esc(k)+'" aria-label="Notes">✎'+(S.n[k]?'•':'')+'</button><button class="ic" data-a="'+(t.c?'td':'th')+'" data-p="'+pi+'" data-t="'+esc(t.t)+'" aria-label="'+(t.c?'Remove':'Hide, not studying this')+'">✕</button></div>';
+   if(lvl==='points')t.d.forEach(x=>{const pk=k+'#'+x,pv=st(pk);if(hide&&pv===3)return;rows+='<div class="row sp"><button class="rm" data-a="tp" data-k="'+esc(pk)+'" aria-label="'+esc(x)+': '+LB[pv]+'. Tap to change"><span class="mk g'+pv+'">'+(pv===3?'✓':pv===1?'!':'')+'</span><span class="t">'+esc(x)+'</span></button>'+(t.cp.includes(x)?'<button class="ic" data-a="pd" data-p="'+pi+'" data-t="'+esc(t.t)+'" data-x="'+esc(x)+'" aria-label="Remove">✕</button>':'')+'</div>'});
+   if(open===k)rows+='<textarea rows="3" data-a="sn" data-k="'+esc(k)+'" aria-label="Notes" placeholder="'+(lit?'Where it is, key word or technique, themes, context':'Case studies, what to fix, anything to remember')+'">'+esc(S.n[k]||'')+'</textarea>'});
+  o+='<div class="card"><h3>'+esc(p.n)+'</h3><div class="meta">'+g+' of '+T.length+' '+(p.u||'topics solid')+(p.tg?' · aim for '+p.tg:'')+'</div><div class="bar"><i style="width:'+(T.length?g/T.length*100:0)+'%"></i></div>'+(rows||(T.length?'':'<div class="empty">Nothing added yet.</div>'))+'<form class="add" data-v="'+pi+'"><input type="text" id="at'+pi+'" aria-label="Add" autocomplete="off" enterkeyhint="done" placeholder="'+esc(p.ph||'Add a topic')+'"><button type="submit">Add</button></form></div>'});
+ if(nh)o+='<p class="small">'+nh+' hidden in this subject. <button class="rs" data-a="unh">Show them again</button></p>';
+ o+='<p class="small">Tap a topic to change it: Not marked, Revise, Solid. The cross hides a topic you are not studying. '+'Saved on this phone only. Use Backup below.'+'</p></div>';
+ $('#app').innerHTML=o;
+ const on=document.querySelector('.chip.on'),cs=document.querySelector('.chips');if(on&&cs)cs.scrollLeft=on.offsetLeft-(cs.clientWidth-on.offsetWidth)/2;
+ Object.keys(keep).forEach(id=>{const i=document.getElementById(id);if(i)i.value=keep[id]})}
+document.addEventListener('submit',e=>{e.preventDefault();const f=e.target;if(f&&f.dataset&&f.dataset.v!==undefined)addTopic(+f.dataset.v)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,v=b.dataset.v,k=b.dataset.k,s=SUB[cur],p=s.p[+b.dataset.p];
+ if(a==='sub'){cur=+v;open=null;fresh=true}
+ else if(a==='lvl'){lvl=v}
+ else if(a==='hide'){hide=!hide}
+ else if(a==='tp'){S.s[k]=[{0:1,1:3,3:0}[st(k)]]}
+ else if(a==='tt'){const t=topics(s,p).find(x=>x.t===b.dataset.t);if(!t)return;const nv={0:1,1:3,3:0}[tst(s.n,p.n,t)],kk=K(s.n,p.n,t.t);if(t.d.length)t.d.forEach(x=>{S.s[kk+'#'+x]=[nv]});else S.s[kk]=[nv]}
+ else if(a==='nt'){open=open===k?null:k}
+ else if(a==='td'){const key=s.n+'|'+p.n;S.c[key]=(S.c[key]||[]).filter(x=>x!==b.dataset.t)}
+ else if(a==='th'){S.h[K(s.n,p.n,b.dataset.t)]=1}
+ else if(a==='pd'){const key=s.n+'|'+p.n;S.c[key]=(S.c[key]||[]).filter(x=>x!==b.dataset.t+' › '+b.dataset.x)}
+ else if(a==='unh'){Object.keys(S.h).forEach(x=>{if(x.indexOf(s.n+'|')===0)delete S.h[x]})}
+ else return;save();render()});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.a==='sn'){S.n[t.dataset.k]=t.value;save()}});
+init();render();
+</script>
+<section id="bk"><details><summary>Backup and restore</summary>
+<p>Your progress is stored in this browser only. Clearing site data or changing phone loses it. Copy the backup text into Notes or email it to yourself, and paste it back here to restore.</p>
+<div class="bkb"><button id="bkc" type="button">Copy backup</button><button id="bkr" type="button">Restore from text below</button></div>
+<textarea id="bkt" rows="4" aria-label="Backup text" placeholder="Paste backup text here to restore"></textarea><p id="bkm" class="small" role="status"></p></details></section>
+<script>
+(function(){const $=s=>document.querySelector(s),m=t=>{$('#bkm').textContent=t};
+$('#bkc').onclick=()=>{let j=localStorage.getItem('rt3')||'{}';try{j=JSON.stringify(S)}catch(e){}$('#bkt').value=j;
+ (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(j):Promise.reject()).then(()=>m('Copied.'),()=>{$('#bkt').select();m('Select the text above and copy it.')})};
+$('#bkr').onclick=()=>{try{const o=JSON.parse($('#bkt').value);if(!o||typeof o!=='object'||!('s' in o))throw 0;load(o);localStorage.setItem('rt3',JSON.stringify(S));render();m('Restored.')}catch(e){m('That text is not a valid backup.')}}})();
+</script>
+</body>
+</html>
